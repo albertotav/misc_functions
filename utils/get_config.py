@@ -5,19 +5,41 @@ import yaml
 class Config_loader:
     """Tool for loading configuration files in .yml or .json
 
-    Designed for using a json or yml file as "path library", getting
-    the desired value with Config_loader.get(Keyword) or Config_loader[Keyword].
+    Designed to use a json or yml file as "path library", getting
+    the desired value with Config_loader[Keyword].
 
-    Can return multiple nested dictionaries/lists.
+    Can return nested dictionaries using dot separated values like
+    Config_loader[Dict.Nested_Dict.Keyword].
+
+    Changes default dictionary using Config_loader.select() method.
+
+    Use Config_loader.get() to always return from loaded file 
+    (ignoring any selected nested dictionary).
+
+    Parameters
+    ----------
+    file_path : str, default None.
+        If None, load configuration from ~/config/configuration.yml or .json.
     """
 
-    def __init__(self, file_path:str):
-        self.file_path = file_path
-        self._load_from_file(self.file_path)
-        pass
+    def __init__(self, file_path:str = None):
+        if file_path == None:
+            try:
+                self.file_path = "config/configuration.yml"
+                self.data = self._load_from_file(self.file_path)
+            except FileNotFoundError:
+                try:
+                    self.file_path = "config/configuration.json"
+                    self.data = self._load_from_file(self.file_path)
+                except FileNotFoundError:                  
+                    raise Exception("Could not find configuration.yml or .json in ~/config/")
+        else:
+            self.file_path = file_path
+            self.data = self._load_from_file(self.file_path)
+            pass
 
     def __getitem__(self, keyword:str):
-        return self.get(keyword)
+        return self._get(keyword)
 
     @staticmethod
     def read_json_file(file_path:str):
@@ -41,54 +63,71 @@ class Config_loader:
         parsed_yml = yaml.load(open(rel_path), Loader=yaml.SafeLoader)
         return parsed_yml
 
-    def _load_from_file(self, file_path:int):
-        """Load self.data from file_path
+    def _load_from_file(self, file_path:str):
+        """Load self.data from file_path.
         """
         # Get file format from string
         file_format = file_path.split(sep='.')[-1]
 
         if file_format == 'yml' or file_format == 'yaml':
-            self.data = self.read_yml_file(file_path)
+            data = self.read_yml_file(file_path)
+            return data
 
         elif file_format == 'json':
-            self.data = self.read_json_file(file_path)        
+            data = self.read_json_file(file_path) 
+            return data       
         else:
             raise Exception("Wrong file format. Use yml/yaml or json files")
-        pass
-
-    def get_dict(self):
-        """Returns default dictionary.
-        """
-        return self.data
     
-    def select(self, dict_name:str):
+    def select(self, dict_name:str = None):
         """Selects dictionary from loaded file as default for
-        Config_loader.get() method.
-
-        dict_name : string
-            Dictionary name to load as default.
-            If None, returns to root dictionary.
-        """
-        if dict_name == None:
-             self._load_from_file(self.file_path)
-        else:
-            self.data = self.data[dict_name]
-        pass
-
-    def get(self,keyword:str, nested_dict:str = None):
-        """Return value assigned to keyword in loaded file.
-        
-        Change default dictionary using Config_loader.select() method.
+        Config_loader.__getitem__() method.
 
         Parameters
         ----------
-        keyword : string
-            Dictionary keyword to look
-
-        nested_dict : string
-            Select a nested dictionary in default dictionary to search for keyword.
+        dict_name : str, default None.
+            Dictionary name to load as default.
+            If None, returns to root dictionary.
+            Select nested dictionaries using dot separated keywords.
         """
-        if nested_dict == None:
-            return self.data[keyword]
+        if dict_name == None:
+            self.data = self._load_from_file(self.file_path)
         else:
-            return self.data[nested_dict][keyword]   
+            temp_data = self.data
+            for key in dict_name.split(sep='.'):
+                temp_data = temp_data[key]
+        self.data = temp_data
+        pass
+
+    def _get(self,keyword:str):
+        """Return value assigned to keyword in loaded file.
+        
+        Uses default dictionary selected by Config_loader.select() method.
+
+        Parameters
+        ----------
+        keyword : str
+            Dictionary keyword to look. Returns nested dictionaries 
+            using dot separated keywords.
+        """
+        temp_data = self.data
+        for key in keyword.split(sep='.'):
+            temp_data = temp_data[key]
+        return temp_data
+
+    def get(self,keyword:str):
+        """Return value assigned to keyword in loaded file.
+
+        Ignores Config_loader.select() default directory.
+
+        Parameters
+        ----------
+        keyword : str
+            Dictionary keyword to look. Returns nested dictionaries 
+            using dot separated keywords.
+        """
+        temp_data = self._load_from_file(self.file_path)
+
+        for key in keyword.split(sep='.'):
+            temp_data = temp_data[key]
+        return temp_data
