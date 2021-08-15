@@ -2,18 +2,18 @@ import os
 import json
 import yaml
 
-class Config_loader:
+class Pathfinder:
     """Tool for loading configuration files in .yml or .json
 
     Designed to use a json or yml file as "path library", getting
-    the desired value with Config_loader[Keyword].
+    the desired value with Pathfinder[Keyword].
 
     Can return nested dictionaries using dot separated values like
-    Config_loader[Dict.Nested_Dict.Keyword].
+    Pathfinder[Dict.Nested_Dict.Keyword].
 
-    Changes default dictionary using Config_loader.select() method.
+    Changes default dictionary using Pathfinder.select() method.
 
-    Use Config_loader.get() to always return from loaded file 
+    Use Pathfinder.get() to always return from loaded file 
     (ignoring any selected nested dictionary).
 
     Parameters
@@ -81,7 +81,7 @@ class Config_loader:
     
     def select(self, dict_name:str = None):
         """Selects dictionary from loaded file as default for
-        Config_loader.__getitem__() method.
+        Pathfinder.__getitem__() method.
 
         Parameters
         ----------
@@ -102,7 +102,7 @@ class Config_loader:
     def _get(self,keyword:str):
         """Return value assigned to keyword in loaded file.
         
-        Uses default dictionary selected by Config_loader.select() method.
+        Uses default dictionary selected by Pathfinder.select() method.
 
         Parameters
         ----------
@@ -118,7 +118,7 @@ class Config_loader:
     def get(self,keyword:str):
         """Return value assigned to keyword in loaded file.
 
-        Ignores Config_loader.select() default directory.
+        Ignores Pathfinder.select() default directory.
 
         Parameters
         ----------
