@@ -23,23 +23,32 @@ class Pathfinder:
     """
 
     def __init__(self, file_path:str = None):
+        # Original data from file
+        self.original = self._load_default(file_path)
+        # Selected data (can be changed with methods)
+        self.data = self.original
+
+    def __getitem__(self, keyword:str):
+        return self.keyword_dot(self.data, keyword)
+
+    def _load_default(self, file_path):
+        """Load configuration from ~/config/configuration.yml or .json if file_path == None.
+
+        Returns loaded data from file_path.
+        """
         if file_path == None:
             try:
-                self.file_path = "config/configuration.yml"
-                self.data = self._load_from_file(self.file_path)
+                default_path = "config/configuration.yml"
+                data = self._load_from_file(default_path)
             except FileNotFoundError:
                 try:
-                    self.file_path = "config/configuration.json"
-                    self.data = self._load_from_file(self.file_path)
+                    default_path = "config/configuration.json"
+                    data = self._load_from_file(default_path)
                 except FileNotFoundError:                  
                     raise Exception("Could not find configuration.yml or .json in ~/config/")
         else:
-            self.file_path = file_path
-            self.data = self._load_from_file(self.file_path)
-            pass
-
-    def __getitem__(self, keyword:str):
-        return self._get(keyword)
+            data = self._load_from_file(file_path)
+        return data
 
     @staticmethod
     def read_json_file(file_path:str):
@@ -78,6 +87,16 @@ class Pathfinder:
             return data       
         else:
             raise Exception("Wrong file format. Use yml/yaml or json files")
+
+    @staticmethod
+    def keyword_dot(data, keyword):
+        """Return value in data for keyword.
+
+        Returns value in nested dictionaries using dot separated keywords.
+        """        
+        for key in keyword.split(sep='.'):
+            data = data[key]
+        return data       
     
     def select(self, dict_name:str = None):
         """Selects dictionary from loaded file as default for
@@ -91,34 +110,15 @@ class Pathfinder:
             Select nested dictionaries using dot separated keywords.
         """
         if dict_name == None:
-            self.data = self._load_from_file(self.file_path)
+            self.data = self.original
         else:
-            temp_data = self.data
-            for key in dict_name.split(sep='.'):
-                temp_data = temp_data[key]
-        self.data = temp_data
+            self.data = self.keyword_dot(self.original, dict_name)
         pass
-
-    def _get(self,keyword:str):
-        """Return value assigned to keyword in loaded file.
-        
-        Uses default dictionary selected by Pathfinder.select() method.
-
-        Parameters
-        ----------
-        keyword : str
-            Dictionary keyword to look. Returns nested dictionaries 
-            using dot separated keywords.
-        """
-        temp_data = self.data
-        for key in keyword.split(sep='.'):
-            temp_data = temp_data[key]
-        return temp_data
 
     def get(self,keyword:str):
         """Return value assigned to keyword in loaded file.
 
-        Ignores Pathfinder.select() default directory.
+        Ignores Pathfinder.select() directory.
 
         Parameters
         ----------
@@ -126,8 +126,4 @@ class Pathfinder:
             Dictionary keyword to look. Returns nested dictionaries 
             using dot separated keywords.
         """
-        temp_data = self._load_from_file(self.file_path)
-
-        for key in keyword.split(sep='.'):
-            temp_data = temp_data[key]
-        return temp_data
+        return self.keyword_dot(self.original, keyword)
