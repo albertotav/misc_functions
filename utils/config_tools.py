@@ -54,12 +54,12 @@ class Pathfinder:
     def read_json_file(file_path:str):
         """Read json file using yaml.SafeLoader.
 
-        Returns parsed yml file.
+        Returns parsed json file.
         """
         # Get relative path from current working directory
         rel_path = os.path.relpath(file_path)
-        parsed_yml = yaml.load(open(rel_path), Loader=yaml.SafeLoader)
-        return parsed_yml
+        parsed_json = json.load(open(rel_path))
+        return parsed_json
 
     @staticmethod
     def read_yml_file(file_path:str):
@@ -73,7 +73,7 @@ class Pathfinder:
         return parsed_yml
 
     def _load_from_file(self, file_path:str):
-        """Load self.data from file_path.
+        """Load data from file_path.
         """
         # Get file format from string
         file_format = file_path.split(sep='.')[-1]
