@@ -19,40 +19,36 @@ class Pathfinder:
     Parameters
     ----------
     file_path : str, default None.
-        If None, load configuration from ~/config/configuration.yml or .json.
+        If NoneType, load configuration from ~/config/configuration.yml or .json.
+
+        If ListType, load and merge dicts in listed string file paths.
+        Identical keywords will be replaced by the forwardmost loaded file on list.
     """
 
     def __init__(self, file_path:str = None):
         # Original data from file
-        self.original = self._load_default(file_path)
+        self._build_original(file_path)
         # Selected data (can be changed with methods)
         self.data = self.original
 
     def __getitem__(self, keyword:str):
         return self.keyword_dot(self.data, keyword)
 
-    def _load_default(self, file_path):
-        """Load configuration from ~/config/configuration.yml or .json if file_path == None.
-
-        Returns loaded data from file_path.
+    def _build_original(self, file_path):
+        """Set self.original dictionary build.
         """
         if file_path == None:
-            try:
-                default_path = "config/configuration.yml"
-                data = self._load_from_file(default_path)
-            except FileNotFoundError:
-                try:
-                    default_path = "config/configuration.json"
-                    data = self._load_from_file(default_path)
-                except FileNotFoundError:                  
-                    raise Exception("Could not find configuration.yml or .json in ~/config/")
+            self.original = self._load_default()
+        elif isinstance(file_path, str):
+            self.original = self._load_from_file(file_path)
+        elif isinstance(file_path, list):
+            self.original = self._load_from_list(file_path)
         else:
-            data = self._load_from_file(file_path)
-        return data
+            raise TypeError("file_path must be either None, string or a list of strings")
 
     @staticmethod
     def read_json_file(file_path:str):
-        """Read json file using yaml.SafeLoader.
+        """Read json file.
 
         Returns parsed json file.
         """
@@ -81,12 +77,35 @@ class Pathfinder:
         if file_format == 'yml' or file_format == 'yaml':
             data = self.read_yml_file(file_path)
             return data
-
         elif file_format == 'json':
             data = self.read_json_file(file_path) 
             return data       
         else:
             raise Exception("Wrong file format. Use yml/yaml or json files")
+
+    def _load_default(self):
+        """Load configuration from ~/config/configuration.yml or .json if file_path == None.
+
+        Returns loaded data from file_path.
+        """
+        default_path = "config/configuration"
+        try:
+            data = self._load_from_file(default_path + ".yml")
+        except FileNotFoundError:
+            try:
+                data = self._load_from_file(default_path + ".json")
+            except FileNotFoundError:                  
+                raise Exception("Could not find configuration.yml or .json in ~/config/")
+        return data
+
+    def _load_from_list(self, file_path:list):
+        """Loads data from string file paths in a list and merge it into a single dictionary.
+        """
+        data = {}
+        for file in file_path:
+            _data = self._load_from_file(file)
+            data.update(_data)
+        return data
 
     @staticmethod
     def keyword_dot(data, keyword):
