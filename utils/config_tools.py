@@ -34,8 +34,18 @@ class Pathfinder:
     def __getitem__(self, keyword:str):
         return self.keyword_dot(self.data, keyword)
 
-    def _build_original(self, file_path):
+    def _build_original(self, file_path:str):
         """Set self.original dictionary build.
+
+        Parameters
+        ----------
+        file_path : None, str or list
+            Path or list of paths for yml/json files. If None, loads default path
+
+        Raises
+        ------
+        TypeError
+            If file_path isn't None, string or a list of strings
         """
         if file_path == None:
             self.original = self._load_default()
@@ -48,9 +58,17 @@ class Pathfinder:
 
     @staticmethod
     def read_json_file(file_path:str):
-        """Read json file.
+        """Read json file into a dict.
 
-        Returns parsed json file.
+        Parameters
+        ----------
+        file_path : str
+            Local path to file.
+
+        Returns
+        -------
+        dict
+            dict from loaded file.
         """
         # Get relative path from current working directory
         rel_path = os.path.relpath(file_path)
@@ -61,7 +79,15 @@ class Pathfinder:
     def read_yml_file(file_path:str):
         """Read yml file using yaml.SafeLoader.
 
-        Returns parsed yml file.
+        Parameters
+        ----------
+        file_path : str
+            Local path to file.
+
+        Returns
+        -------
+        dict
+            dict from loaded file.
         """
         # Get relative path from current working directory
         rel_path = os.path.relpath(file_path)
@@ -70,6 +96,21 @@ class Pathfinder:
 
     def _load_from_file(self, file_path:str):
         """Load data from file_path.
+
+        Parameters
+        ----------
+        file_path : str
+            Local path to file.
+
+        Returns
+        -------
+        dict
+            Loaded dict from file_path.
+
+        Raises
+        ------
+        Exception
+            If file in file_path isn't yml/yaml or json.
         """
         # Get file format from string
         file_format = file_path.split(sep='.')[-1]
@@ -84,9 +125,18 @@ class Pathfinder:
             raise Exception("Wrong file format. Use yml/yaml or json files")
 
     def _load_default(self):
-        """Load configuration from ~/config/configuration.yml or .json if file_path == None.
+        """Load configuration from ~/config/configuration.yml
+        or .json if file_path == None.      
 
-        Returns loaded data from file_path.
+        Returns
+        -------
+        dict
+            Loaded data from file_path.
+
+        Raises
+        ------
+        FileNotFoundError
+            If no configuration.yml or .json is found in ~/config/
         """
         default_path = "config/configuration"
         try:
@@ -95,11 +145,21 @@ class Pathfinder:
             try:
                 data = self._load_from_file(default_path + ".json")
             except FileNotFoundError:                  
-                raise Exception("Could not find configuration.yml or .json in ~/config/")
+                raise FileNotFoundError("Could not find configuration.yml or .json in ~/config/")
         return data
 
     def _load_from_list(self, file_path:list):
         """Loads data from string file paths in a list and merge it into a single dictionary.
+
+        Parameters
+        ----------
+        file_path : list
+            List of file path strings.
+
+        Returns
+        -------
+        dict
+            dicts from file_path merged into one.
         """
         data = {}
         for file in file_path:
@@ -108,10 +168,21 @@ class Pathfinder:
         return data
 
     @staticmethod
-    def keyword_dot(data, keyword):
-        """Return value in data for keyword.
+    def keyword_dot(data:dict, keyword:str):
+        """Retrieves value in nested dictionaries using dot separated keywords.
 
-        Returns value in nested dictionaries using dot separated keywords.
+        Parameters
+        ----------
+        data : dict
+            dict to search keyword.
+
+        keyword : str
+            keyword string to be located. Use dot separated keys
+            to return from nested dicts
+
+        Returns
+        -------
+            Value in data for keyword.
         """        
         for key in keyword.split(sep='.'):
             data = data[key]
