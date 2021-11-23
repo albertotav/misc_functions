@@ -29,13 +29,13 @@ class Pathfinder:
         # Original data from file
         self._build_original(file_path)
         # Selected data (can be changed with methods)
-        self.data = self.original
+        self._data = self._original
 
     def __getitem__(self, keyword:str):
-        return self.keyword_dot(self.data, keyword)
+        return self.keyword_dot(self._data, keyword)
 
     def _build_original(self, file_path:str):
-        """Set self.original dictionary build.
+        """Set self._original dictionary build.
 
         Parameters
         ----------
@@ -48,11 +48,11 @@ class Pathfinder:
             If file_path isn't None, string or a list of strings
         """
         if file_path == None:
-            self.original = self._load_default()
+            self._original = self._load_default()
         elif isinstance(file_path, str):
-            self.original = self._load_from_file(file_path)
+            self._original = self._load_from_file(file_path)
         elif isinstance(file_path, list):
-            self.original = self._load_from_list(file_path)
+            self._original = self._load_from_list(file_path)
         else:
             raise TypeError("file_path must be either None, string or a list of strings")
 
@@ -200,20 +200,62 @@ class Pathfinder:
             Select nested dictionaries using dot separated keywords.
         """
         if dict_name == None:
-            self.data = self.original
+            self._data = self._original
         else:
-            self.data = self.keyword_dot(self.original, dict_name)
+            self._data = self.keyword_dot(self._original, dict_name)
         pass
 
-    def get(self,keyword:str):
+    def get(self, keyword:str, ignore_select:bool = True):
         """Return value assigned to keyword in loaded file.
 
-        Ignores Pathfinder.select() directory.
+        Ignores Pathfinder.select() directory by default.
 
         Parameters
         ----------
         keyword : str
             Dictionary keyword to look. Returns nested dictionaries 
             using dot separated keywords.
+        ignore_select : bool, default True
+            If True, ignores Pathfinder.select() directory. Default True.
         """
-        return self.keyword_dot(self.original, keyword)
+        if ignore_select:
+            return self.keyword_dot(self._original, keyword)
+        else:
+            return self.keyword_dot(self._data, keyword)
+
+    def get_path(self, keyword:str, ignore_select:bool=False):
+        """Return .get() method for value assigned to keyword in loaded file.
+
+        Does NOT ignore Pathfinder.select() directory by default.
+
+        Parameters
+        ----------
+        keyword : str
+            Dictionary keyword to look. Returns nested dictionaries 
+            using dot separated keywords.
+        ignore_select : bool, default False
+            If True, ignores Pathfinder.select() directory.
+        """
+        return self.get(self.get(keyword, ignore_select))
+    
+    @property
+    def data(self) -> dict:
+        """Return current data dictionary.
+
+        Returns
+        -------
+        dict
+            Current data dictionary.
+        """
+        return self._data
+
+    @property
+    def original(self) -> dict:
+        """Return original data dictionary.
+
+        Returns
+        -------
+        dict
+            Original data dictionary.
+        """
+        return self._original
